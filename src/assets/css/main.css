@@ -1,0 +1,117 @@
+/* Previous styles from main.css remain unchanged, adding new styles below */
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-content h2 {
+  margin-bottom: 1.5rem;
+}
+
+.modal-content .close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* Calendar Widget */
+.calendar-widget {
+  margin: 1rem 0;
+}
+
+.calendar-widget input {
+  margin: 0.5rem 0;
+}
+
+/* Expandable Reviews Section */
+.reviews-section {
+  margin-top: 1rem;
+}
+
+.reviews-section h4 {
+  cursor: pointer;
+  color: #007bff;
+  margin-bottom: 0.5rem;
+}
+
+.reviews-section .reviews-content {
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: none;
+}
+
+.reviews-section .reviews-content.active {
+  display: block;
+}
+
+.review {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+.review:last-child {
+  border-bottom: none;
+}
+
+/* Date Range Inputs for Unavailable Dates */
+.date-range-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.date-range-group input {
+  flex: 1;
+}
+
+/* Form for New/Edit Item */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+/* Checkout Page */
+.checkout-details {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+/* Disabled Button */
+button:disabled,
+.btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}

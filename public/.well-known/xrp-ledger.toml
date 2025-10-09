@@ -1,0 +1,34 @@
+[METADATA]
+modified = 2022-09-16T14:52:00.000Z
+
+
+[[ACCOUNTS]]
+address = "rJ55NJHNj3CzMQ1SyiTHpyDKgf6gEqh4Ch"
+desc = "https://nftstitches.com operating address for airdrops"
+
+[[ACCOUNTS]]
+address = "rUk2Zik83NUNw8E3a4ahAxTEt57P1QxoLB"
+desc = "https://nftstitches.com operating address for OL-B"
+
+[[ACCOUNTS]]
+address = "rQxiuuzj2p7nU54wdtGe8gaas91UeWRBx"
+desc = "https://nftstitches.com operating address for Vincent"
+
+[[ACCOUNTS]]
+address = "r3PjP4q4U3WW6os3GAPBykzSNfdFiiHNFT"
+desc = "https://nftstitches.com issuing address for NFTs"
+
+[[CURRENCIES]]
+code = "FSE"
+issuer = "rs1MKY54miDtMFEGyNuPd3BLsXauFZUSrj"
+
+
+[[CURRENCIES]]
+code = "SSE"
+issuer = "rMDQTunsjE32sAkBDbwixpWr8TJdN5YLxu"
+
+
+[[PRINCIPALS]]
+name = "nftstitches.com"
+email = "info@nftstitches.com"
+twitter = "@_bear_bull"
