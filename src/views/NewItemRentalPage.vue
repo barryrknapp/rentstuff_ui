@@ -15,13 +15,34 @@
         ></textarea>
       </div>
       <div class="form-group">
-        <label for="pricePerDay">Price per Day</label>
-        <input
-          id="pricePerDay"
-          v-model.number="form.pricePerDay"
-          type="number"
-          required
-        />
+        <label>Prices</label>
+        <div
+          v-for="(price, index) in form.prices"
+          :key="index"
+          class="price-entry"
+        >
+          <label :for="'price-' + index">Price per Day</label>
+          <input
+            :id="'price-' + index"
+            v-model.number="form.prices[index].price"
+            type="number"
+            step="0.01"
+            required
+          />
+          <label :for="'minDaysRented-' + index">Min Days Rented</label>
+          <input
+            :id="'minDaysRented-' + index"
+            v-model.number="form.prices[index].minDaysRented"
+            type="number"
+            required
+          />
+          <button type="button" class="btn remove" @click="removePrice(index)">
+            Remove
+          </button>
+        </div>
+        <button type="button" class="btn secondary" @click="addPrice">
+          Add Price
+        </button>
       </div>
       <div class="form-group">
         <label for="minDays">Minimum Days</label>
@@ -94,7 +115,6 @@ export default {
       form: {
         name: "",
         description: "",
-        pricePerDay: 0,
         minDays: 1,
         maxDays: 30,
         imageUrls: [],
@@ -102,6 +122,7 @@ export default {
         taxonomyIds: [],
         unavailableDates: [],
         ownerId: null,
+        prices: [], // Updated to array of price objects
       },
       taxonomies: [],
     };
@@ -151,7 +172,10 @@ export default {
         this.form = {
           ...response.data,
           imageUrls: response.data.imageUrls || [],
-          ownerId: response.data.ownerId, // Ensure ownerId is set
+          taxonomyIds: response.data.taxonomyIds || [],
+          unavailableDates: response.data.unavailableDates || [],
+          ownerId: response.data.ownerId,
+          prices: response.data.prices || [], // Updated to handle prices
         };
       } catch (error) {
         console.error("Error fetching item:", error);
@@ -163,11 +187,17 @@ export default {
     addDateRange() {
       this.form.unavailableDates.push({ startDate: "", endDate: "" });
     },
+    addPrice() {
+      this.form.prices.push({ price: 0, minDaysRented: 1 });
+    },
+    removePrice(index) {
+      this.form.prices.splice(index, 1);
+    },
     async submitForm() {
       try {
         const token = localStorage.getItem("token");
         console.log("Submitting with Token:", token);
-        console.log("Form Data:", this.form); // Debug form data
+        console.log("Form Data:", JSON.stringify(this.form));
         if (!token || token === "undefined") {
           console.error("No valid token found, redirecting to login");
           this.$router.push("/login");
@@ -176,6 +206,11 @@ export default {
         if (!this.form.ownerId) {
           console.error("Owner ID is missing, redirecting to login");
           this.$router.push("/login");
+          return;
+        }
+        if (!this.form.prices.length) {
+          console.error("At least one price is required");
+          alert("Please add at least one price");
           return;
         }
         const url = this.isEdit
@@ -200,3 +235,40 @@ export default {
   },
 };
 </script>
+
+<style>
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+}
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px;
+}
+.price-entry {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.price-entry input {
+  flex: 1;
+}
+.btn {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+.btn.secondary {
+  background-color: #6c757d;
+}
+.btn.remove {
+  background-color: #dc3545;
+}
+</style>
