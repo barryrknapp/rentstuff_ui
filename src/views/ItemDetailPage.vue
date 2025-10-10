@@ -33,7 +33,7 @@
         :month="currentMonth"
         :year="currentYear"
         :model-config="modelConfig"
-        @update:model-value="validateDates"
+        @update:model-value="handleDateUpdate"
       />
       <p v-if="dateValidationError" class="error">{{ dateValidationError }}</p>
       <div v-if="isValidRentalDates" class="time-pickers">
@@ -45,7 +45,7 @@
             :enable-seconds="false"
             format="hh:mm a"
             :model-config="{ type: 'string', mask: 'HH:mm' }"
-            @update:model-value="validateTimes"
+            @update:model-value="(time) => handleTimeUpdate(time, true)"
           />
         </div>
         <div class="time-picker">
@@ -56,7 +56,7 @@
             :enable-seconds="false"
             format="hh:mm a"
             :model-config="{ type: 'string', mask: 'HH:mm' }"
-            @update:model-value="validateTimes"
+            @update:model-value="(time) => handleTimeUpdate(time, false)"
           />
         </div>
       </div>
@@ -87,6 +87,7 @@
       :to="`/checkout/${item.id}?startDateTime=${startDateTime}&endDateTime=${endDateTime}`"
       class="btn"
       :class="{ disabled: !isValidRentalDates || !isValidTimes }"
+      @click="logRedirect"
     >
       Rent Item
     </router-link>
@@ -111,7 +112,7 @@ export default {
         maxDays: 30,
       },
       selectedDates: [], // Array for range selection
-      pickupTime: null, // e.g., "09:00"
+      pickupTime: null, // e.g., "08:00"
       dropoffTime: null, // e.g., "17:00"
       itemReviews: [],
       userReviews: [],
@@ -131,16 +132,26 @@ export default {
   },
   computed: {
     startDateTime() {
-      // Ensure pickupTime is used if available, otherwise default to '00:00'
-      return this.selectedDates[0] && this.isValidRentalDates
-        ? `${this.selectedDates[0]}T${this.pickupTime || "00:00"}:00`
-        : "";
+      if (
+        !this.selectedDates[0] ||
+        !this.pickupTime ||
+        !this.isValidRentalDates ||
+        !this.isValidTimes
+      ) {
+        return "";
+      }
+      return `${this.selectedDates[0]}T${this.pickupTime}:00`;
     },
     endDateTime() {
-      // Ensure dropoffTime is used if available, otherwise default to '23:59'
-      return this.selectedDates[1] && this.isValidRentalDates
-        ? `${this.selectedDates[1]}T${this.dropoffTime || "23:59"}:00`
-        : "";
+      if (
+        !this.selectedDates[1] ||
+        !this.dropoffTime ||
+        !this.isValidRentalDates ||
+        !this.isValidTimes
+      ) {
+        return "";
+      }
+      return `${this.selectedDates[1]}T${this.dropoffTime}:00`;
     },
     isValidRentalDates() {
       if (!this.selectedDates[0] || !this.selectedDates[1]) {
@@ -280,11 +291,61 @@ export default {
         }
       }
     },
+    handleDateUpdate(dates) {
+      // Convert Date objects to YYYY-MM-DD strings
+      this.selectedDates = dates.map((date) => {
+        if (date instanceof Date) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          return `${year}-${month}-${day}`;
+        }
+        return date;
+      });
+      console.log("Date picker updated:", this.selectedDates);
+      this.validateDates();
+    },
+    handleTimeUpdate(time, isPickup) {
+      // Convert time object or string to HH:mm string
+      let timeStr;
+      if (
+        time &&
+        typeof time === "object" &&
+        time.hours != null &&
+        time.minutes != null
+      ) {
+        timeStr = `${String(time.hours).padStart(2, "0")}:${String(
+          time.minutes
+        ).padStart(2, "0")}`;
+      } else {
+        timeStr = time || null;
+      }
+      if (isPickup) {
+        this.pickupTime = timeStr;
+      } else {
+        this.dropoffTime = timeStr;
+      }
+      console.log("Time picker updated:", {
+        time,
+        pickup: this.pickupTime,
+        dropoff: this.dropoffTime,
+      });
+      this.validateTimes();
+    },
     validateDates() {
       this.isValidRentalDates;
     },
     validateTimes() {
       this.isValidTimes;
+    },
+    logRedirect() {
+      console.log("Redirecting with:", {
+        selectedDates: this.selectedDates,
+        pickupTime: this.pickupTime,
+        dropoffTime: this.dropoffTime,
+        startDateTime: this.startDateTime,
+        endDateTime: this.endDateTime,
+      });
     },
   },
 };
