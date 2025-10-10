@@ -1,19 +1,21 @@
 <template>
   <div>
     <h2>{{ item.name }}</h2>
-    <img
-      :src="item.imageUrl || 'https://via.placeholder.com/300'"
-      alt="Rental Item"
-    />
+    <div class="image-gallery">
+      <img
+        v-for="(url, index) in item.imageUrls"
+        :key="index"
+        :src="url || 'https://via.placeholder.com/300'"
+        alt="Rental Item"
+      />
+    </div>
     <p>{{ item.description }}</p>
     <p class="price">${{ item.pricePerDay }} / day</p>
     <p>Min Days: {{ item.minDays }} | Max Days: {{ item.maxDays }}</p>
-
     <div class="calendar-widget">
       <h3>Select Rental Dates</h3>
-      <DateRangePicker v-model:range="rentalDates" />
+      <DateRangePicker v-model="rentalDates" />
     </div>
-
     <div class="reviews-section">
       <h4 @click="toggleItemReviews">
         Item Reviews ({{ itemReviews.length }})
@@ -25,7 +27,6 @@
         </div>
       </div>
     </div>
-
     <div class="reviews-section">
       <h4 @click="toggleUserReviews">
         User Reviews ({{ userReviews.length }})
@@ -37,7 +38,6 @@
         </div>
       </div>
     </div>
-
     <router-link
       :to="`/checkout/${item.id}?startDate=${rentalDates.startDate}&endDate=${rentalDates.endDate}`"
       class="btn"
@@ -56,7 +56,7 @@ export default {
   components: { DateRangePicker },
   data() {
     return {
-      item: {},
+      item: { imageUrls: [] },
       rentalDates: { startDate: "", endDate: "" },
       itemReviews: [],
       userReviews: [],
@@ -71,7 +71,7 @@ export default {
     async fetchItem() {
       try {
         const response = await axios.get(
-          `http://localhost:8081/rentalitems/${this.$route.params.id}`
+          `/rentstuff/rentalitems/${this.$route.params.id}`
         );
         this.item = response.data;
       } catch (error) {
@@ -83,7 +83,7 @@ export default {
       if (this.showItemReviews && !this.itemReviews.length) {
         try {
           const response = await axios.get(
-            `http://localhost:8081/rentalitems/${this.$route.params.id}/reviews`
+            `/rentstuff/reviews/rentalitems/${this.$route.params.id}`
           );
           this.itemReviews = response.data;
         } catch (error) {
@@ -95,10 +95,14 @@ export default {
       this.showUserReviews = !this.showUserReviews;
       if (this.showUserReviews && !this.userReviews.length) {
         try {
-          const response = await axios.get(
-            `http://localhost:8081/users/${this.item.ownerId}/reviews`
-          );
-          this.userReviews = response.data;
+          const [reviewsResponse, ratingResponse] = await Promise.all([
+            axios.get(`/rentstuff/reviews/users/${this.item.ownerId}`),
+            axios.get(
+              `/rentstuff/reviews/users/${this.item.ownerId}/average-rating`
+            ),
+          ]);
+          this.userReviews = reviewsResponse.data;
+          this.averageUserRating = ratingResponse.data.toFixed(1);
         } catch (error) {
           console.error("Error fetching user reviews:", error);
         }
@@ -107,3 +111,15 @@ export default {
   },
 };
 </script>
+
+<style>
+.image-gallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+.image-gallery img {
+  max-width: 300px;
+  height: auto;
+}
+</style>

@@ -1,7 +1,7 @@
 <template>
   <div>
-    <h2>Available Rentals</h2>
-    <div class="rental-items-grid">
+    <h1>Rental Items</h1>
+    <div class="items">
       <RentalItemCard v-for="item in rentalItems" :key="item.id" :item="item" />
     </div>
   </div>
@@ -20,9 +20,7 @@ export default {
   },
   async created() {
     try {
-      const response = await axios.get(
-        "http://localhost:8081/rentalitems/by-taxonomy/1"
-      ); // Adjust taxonomyId
+      const response = await axios.get("/rentstuff/rentalitems");
       this.rentalItems = response.data;
     } catch (error) {
       console.error("Error fetching rental items:", error);

@@ -54,7 +54,7 @@ export default {
     async fetchItem() {
       try {
         const response = await axios.get(
-          `http://localhost:8081/rentalitems/${this.$route.params.id}`
+          `/rentstuff/rentalitems/${this.$route.params.id}`
         );
         this.item = response.data;
       } catch (error) {
@@ -67,7 +67,7 @@ export default {
     async completeCheckout() {
       try {
         await axios.post(
-          "http://localhost:8081/rentals",
+          "/rentstuff/rentals",
           {
             itemId: this.$route.params.id,
             startDate: this.rentalDates.startDate,
