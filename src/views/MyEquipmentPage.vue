@@ -10,6 +10,7 @@
       <div v-for="item in items" :key="item.id" class="equipment-item">
         <h3>{{ item.name }}</h3>
         <p>{{ item.description }}</p>
+        <p><strong>Status:</strong> {{ item.paused ? "Paused" : "Active" }}</p>
         <div class="prices">
           <p v-for="price in item.prices" :key="price.id">
             ${{ price.price.toFixed(2) }} per day for min
@@ -20,6 +21,16 @@
           <router-link :to="`/equipment/edit/${item.id}`" class="btn"
             >Edit</router-link
           >
+          <router-link :to="`/equipment/${item.id}/bookings`" class="btn"
+            >View Bookings</router-link
+          >
+          <button
+            class="btn"
+            :class="{ 'btn-pause': !item.paused, 'btn-resume': item.paused }"
+            @click="togglePause(item.id, item.paused)"
+          >
+            {{ item.paused ? "Resume Rentals" : "Pause Rentals" }}
+          </button>
         </div>
       </div>
     </div>
@@ -60,11 +71,40 @@ export default {
       } catch (error) {
         console.error(
           "Error fetching equipment:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         this.error = "Failed to load equipment. Please try again.";
       } finally {
         this.loading = false;
+      }
+    },
+    async togglePause(itemId, currentPaused) {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token || token === "undefined") {
+          console.error("No valid token found, redirecting to login");
+          this.$router.push("/login");
+          return;
+        }
+        await axios.patch(
+          `/rentstuff/rentalitems/${itemId}/pause`,
+          { paused: !currentPaused },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        alert(`Item ${currentPaused ? "resumed" : "paused"} successfully!`);
+        await this.fetchMyEquipment();
+      } catch (error) {
+        console.error(
+          "Error toggling pause status:",
+          error.response?.data?.message || error.message
+        );
+        alert(
+          `Failed to ${currentPaused ? "resume" : "pause"} item: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       }
     },
   },
@@ -98,6 +138,12 @@ export default {
 }
 .btn.secondary {
   background-color: #6c757d;
+}
+.btn-pause {
+  background-color: #dc3545;
+}
+.btn-resume {
+  background-color: #28a745;
 }
 .error {
   color: #dc3545;

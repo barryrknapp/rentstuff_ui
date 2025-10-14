@@ -7,6 +7,7 @@ import MyBookingsPage from "../views/MyBookingsPage.vue";
 import MyEquipmentPage from "../views/MyEquipmentPage.vue";
 import ErrorPage from "../components/ErrorPage.vue"; // Optional: for error redirects
 import LoginRegisterModal from '../components/LoginRegisterModal.vue';
+import EquipmentBookingsPage from "../views/EquipmentBookingsPage.vue";
 
 const routes = [
   { path: '/', component: LandingPage },
@@ -18,6 +19,10 @@ const routes = [
   { path: '/login', component: LoginRegisterModal },
   { path: '/my-bookings', component: MyBookingsPage },
   { path: '/error', component: ErrorPage },
+  {
+    path: "/equipment/:id/bookings",
+    component: EquipmentBookingsPage,
+  },
 ];
 
 const router = createRouter({
