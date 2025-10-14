@@ -74,7 +74,6 @@ export default {
         }
         const itemId = this.$route.params.id;
 
-        // Fetch item details for name and image
         const itemResponse = await axios.get(
           `/rentstuff/rentalitems/${itemId}`,
           {
@@ -82,10 +81,10 @@ export default {
           }
         );
         this.itemName = itemResponse.data.name;
-        this.itemImage =
-          itemResponse.data.imageUrls?.[0] || "https://via.placeholder.com/100";
+        this.itemImage = itemResponse.data.imageIds?.length
+          ? `/rentstuff/rentalitems/images/${itemResponse.data.imageIds[0]}`
+          : "https://via.placeholder.com/100";
 
-        // Fetch bookings
         const bookingsResponse = await axios.get(
           `/rentstuff/bookings/item/${itemId}`,
           {

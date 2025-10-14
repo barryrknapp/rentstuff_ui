@@ -1,13 +1,8 @@
 <template>
   <div>
     <h2>{{ isEdit ? "Edit Rental Item" : "Add New Rental Item" }}</h2>
+    <div v-if="uploading" class="uploading">Uploading...</div>
     <form @submit.prevent="submitForm">
-      <div class="form-group">
-        <label for="paused"
-          >Paused (Click checkbox to prevent new rentals)</label
-        >
-        <input id="paused" v-model="form.paused" type="checkbox" />
-      </div>
       <div class="form-group">
         <label for="name">Item Name</label>
         <input id="name" v-model="form.name" type="text" required />
@@ -21,13 +16,10 @@
         ></textarea>
       </div>
       <div class="form-group">
-        <label
-          >Prices (You can add multiple prices to discount multi day
-          rentals)</label
-        >
+        <label>Prices</label>
         <div
           v-for="(price, index) in form.prices"
-          :key="index"
+          :key="price.id || index"
           class="price-entry"
         >
           <label :for="'price-' + index">Price per Day</label>
@@ -45,7 +37,12 @@
             type="number"
             required
           />
-          <button type="button" class="btn remove" @click="removePrice(index)">
+          <button
+            type="button"
+            class="btn remove"
+            @click="removePrice(price, index)"
+            v-if="form.prices.length > 1 || price.id"
+          >
             Remove
           </button>
         </div>
@@ -72,16 +69,74 @@
         />
       </div>
       <div class="form-group">
-        <label for="imageUrls">Image URLs</label>
-        <input
-          v-for="(url, index) in form.imageUrls"
-          :key="index"
-          v-model="form.imageUrls[index]"
-          type="url"
-          placeholder="Enter image URL"
-        />
-        <button type="button" class="btn secondary" @click="addImageUrl">
-          Add Image URL
+        <label for="paused">Paused (Prevent New Rentals)</label>
+        <input id="paused" v-model="form.paused" type="checkbox" />
+      </div>
+      <div class="form-group">
+        <label>New Images</label>
+        <div
+          v-for="(image, index) in form.newImages"
+          :key="'new-' + index"
+          class="image-entry"
+        >
+          <input
+            type="file"
+            :id="'image-' + index"
+            accept="image/*"
+            @change="handleImageChange($event, index)"
+          />
+          <button
+            type="button"
+            class="btn remove"
+            @click="removeNewImage(index)"
+          >
+            Remove
+          </button>
+        </div>
+        <button type="button" class="btn secondary" @click="addNewImage">
+          Add Image
+        </button>
+      </div>
+      <div class="form-group">
+        <label>Existing Images</label>
+        <div
+          v-for="imageId in form.imageIds"
+          :key="imageId"
+          class="image-preview"
+        >
+          <img
+            :src="`/rentstuff/rentalitems/images/${imageId}?t=${Date.now()}`"
+            alt="Existing Image"
+            style="max-width: 100px"
+            @error="handleImageError(imageId)"
+          />
+          <button
+            type="button"
+            class="btn remove"
+            @click="removeImageId(imageId)"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Unavailable Date Ranges</label>
+        <div
+          v-for="(range, index) in form.unavailableDates"
+          :key="range.id || index"
+          class="date-entry"
+        >
+          <DateRangePicker v-model="form.unavailableDates[index]" />
+          <button
+            type="button"
+            class="btn remove"
+            @click="removeDateRange(range, index)"
+          >
+            Remove
+          </button>
+        </div>
+        <button type="button" class="btn secondary" @click="addDateRange">
+          Add Date Range
         </button>
       </div>
       <div class="form-group">
@@ -95,17 +150,6 @@
             {{ taxonomy.name }}
           </option>
         </select>
-      </div>
-      <div class="form-group">
-        <label>Unavailable Date Ranges</label>
-        <DateRangePicker
-          v-for="(range, index) in form.unavailableDates"
-          :key="index"
-          v-model="form.unavailableDates[index]"
-        />
-        <button type="button" class="btn secondary" @click="addDateRange">
-          Add Date Range
-        </button>
       </div>
       <button type="submit" class="btn">Save Item</button>
     </form>
@@ -128,13 +172,16 @@ export default {
         minDays: 1,
         maxDays: 30,
         paused: false,
-        imageUrls: [],
+        newImages: [],
+        imageIds: [],
         taxonomyIds: [],
         unavailableDates: [],
         ownerId: null,
         prices: [],
       },
       taxonomies: [],
+      uploading: false,
+      imageErrors: new Set(),
     };
   },
   async created() {
@@ -143,6 +190,7 @@ export default {
       this.isEdit = true;
       await this.fetchItem();
     } else {
+      this.form.prices = [{ price: 0, minDaysRented: 1 }];
       await this.fetchOwnerId();
     }
   },
@@ -171,11 +219,15 @@ export default {
         );
         this.form = {
           ...response.data,
-          imageUrls: response.data.imageUrls || [],
+          newImages: [],
+          imageIds: response.data.imageIds || [],
           taxonomyIds: response.data.taxonomyIds || [],
           unavailableDates: response.data.unavailableDates || [],
           ownerId: response.data.ownerId,
-          prices: response.data.prices || [],
+          prices:
+            response.data.prices && response.data.prices.length
+              ? response.data.prices
+              : [{ price: 0, minDaysRented: 1 }],
           paused: response.data.paused || false,
         };
       } catch (error) {
@@ -206,20 +258,109 @@ export default {
         this.$router.push("/login");
       }
     },
-    addImageUrl() {
-      this.form.imageUrls.push("");
+    addNewImage() {
+      this.form.newImages.push(null);
+    },
+    removeNewImage(index) {
+      this.form.newImages.splice(index, 1);
+    },
+    async removeImageId(imageId) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`/rentstuff/rentalitems/images/${imageId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.form.imageIds = this.form.imageIds.filter((id) => id !== imageId);
+        this.imageErrors.delete(imageId);
+        alert("Image removed successfully");
+      } catch (error) {
+        console.error(
+          "Error removing image:",
+          error.response?.data?.message || error.message
+        );
+        alert(
+          `Failed to remove image: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      }
     },
     addDateRange() {
       this.form.unavailableDates.push({ startDate: "", endDate: "" });
     },
+    async removeDateRange(range, index) {
+      try {
+        if (range.id) {
+          const token = localStorage.getItem("token");
+          await axios.delete(
+            `/rentstuff/rentalitems/unavailable-dates/${range.id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          alert("Date range removed successfully");
+        }
+        this.form.unavailableDates.splice(index, 1);
+      } catch (error) {
+        console.error(
+          "Error removing date range:",
+          error.response?.data?.message || error.message
+        );
+        alert(
+          `Failed to remove date range: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      }
+    },
     addPrice() {
       this.form.prices.push({ price: 0, minDaysRented: 1 });
     },
-    removePrice(index) {
-      this.form.prices.splice(index, 1);
+    async removePrice(price, index) {
+      try {
+        if (price.id) {
+          const token = localStorage.getItem("token");
+          await axios.delete(`/rentstuff/rentalitems/prices/${price.id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          alert("Price removed successfully");
+        }
+        this.form.prices.splice(index, 1);
+        if (this.form.prices.length === 0) {
+          this.form.prices.push({ price: 0, minDaysRented: 1 });
+        }
+      } catch (error) {
+        console.error(
+          "Error removing price:",
+          error.response?.data?.message || error.message
+        );
+        alert(
+          `Failed to remove price: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      }
+    },
+    handleImageChange(event, index) {
+      const file = event.target.files[0];
+      const maxSizeMB = 200;
+      const maxSizeBytes = maxSizeMB * 1024 * 1024;
+      if (file && file.type.startsWith("image/") && file.size <= maxSizeBytes) {
+        this.form.newImages[index] = file;
+      } else {
+        alert(`Please select a valid image file (max ${maxSizeMB}MB)`);
+        this.form.newImages[index] = null;
+        event.target.value = "";
+      }
+    },
+    handleImageError(imageId) {
+      this.imageErrors.add(imageId);
+      console.warn(`Failed to load image with ID ${imageId}`);
+      this.form.imageIds = this.form.imageIds.filter((id) => id !== imageId);
     },
     async submitForm() {
       try {
+        this.uploading = true;
         const token = localStorage.getItem("token");
         if (!token || token === "undefined") {
           console.error("No valid token found, redirecting to login");
@@ -235,13 +376,86 @@ export default {
           alert("Please add at least one price");
           return;
         }
+
+        // Update item
+        const formData = new FormData();
+        formData.append(
+          "item",
+          new Blob(
+            [
+              JSON.stringify({
+                id: this.form.id,
+                name: this.form.name,
+                description: this.form.description,
+                minDays: this.form.minDays,
+                maxDays: this.form.maxDays,
+                paused: this.form.paused,
+                taxonomyIds: this.form.taxonomyIds,
+                ownerId: this.form.ownerId,
+              }),
+            ],
+            { type: "application/json" }
+          )
+        );
+
+        this.form.newImages.forEach((image, index) => {
+          if (image) {
+            formData.append("images", image);
+          }
+        });
+
         const url = this.isEdit
           ? `/rentstuff/rentalitems/${this.$route.params.id}`
           : "/rentstuff/rentalitems";
-        const method = this.isEdit ? "put" : "post";
-        await axios[method](url, this.form, {
-          headers: { Authorization: `Bearer ${token}` },
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        };
+        const response = await axios({
+          method: this.isEdit ? "put" : "post",
+          url,
+          data: formData,
+          ...config,
         });
+
+        const itemId = this.isEdit ? this.$route.params.id : response.data.id;
+
+        // Add new prices
+        const newPrices = this.form.prices.filter((price) => !price.id);
+        for (const price of newPrices) {
+          await axios.post(
+            "/rentstuff/rentalitems/prices",
+            {
+              price: price.price,
+              minDaysRented: price.minDaysRented,
+              itemId,
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+        }
+
+        // Add new unavailable dates
+        const newDates = this.form.unavailableDates.filter(
+          (date) => !date.id && date.startDate && date.endDate
+        );
+        for (const date of newDates) {
+          await axios.post(
+            "/rentstuff/rentalitems/unavailable-dates",
+            {
+              startDate: date.startDate,
+              endDate: date.endDate,
+              itemId,
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+        }
+
         alert("Item saved successfully!");
         this.$router.push("/my-equipment");
       } catch (error) {
@@ -254,6 +468,8 @@ export default {
             error.response?.data?.message || error.message
           }`
         );
+      } finally {
+        this.uploading = false;
       }
     },
   },
@@ -273,12 +489,16 @@ export default {
   width: 100%;
   padding: 8px;
 }
-.price-entry {
+.image-entry,
+.image-preview,
+.price-entry,
+.date-entry {
   display: flex;
   gap: 10px;
   align-items: center;
   margin-bottom: 10px;
 }
+.image-entry input,
 .price-entry input {
   flex: 1;
 }
@@ -295,5 +515,10 @@ export default {
 }
 .btn.remove {
   background-color: #dc3545;
+}
+.uploading {
+  color: #007bff;
+  font-style: italic;
+  margin-bottom: 10px;
 }
 </style>

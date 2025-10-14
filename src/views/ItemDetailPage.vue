@@ -3,9 +3,9 @@
     <h2>{{ item.name || "Unnamed Item" }}</h2>
     <div class="image-gallery">
       <img
-        v-for="(url, index) in item.imageUrls"
-        :key="index"
-        :src="url || 'https://via.placeholder.com/300'"
+        v-for="imageId in item.imageIds"
+        :key="imageId"
+        :src="`/rentstuff/rentalitems/images/${imageId}`"
         alt="Rental Item"
       />
     </div>
@@ -86,11 +86,14 @@
     <router-link
       :to="`/checkout/${item.id}?startDateTime=${startDateTime}&endDateTime=${endDateTime}`"
       class="btn"
-      :class="{ disabled: !isValidRentalDates || !isValidTimes }"
+      :class="{ disabled: !isValidRentalDates || !isValidTimes || item.paused }"
       @click="logRedirect"
     >
       Rent Item
     </router-link>
+    <p v-if="item.paused" class="error">
+      This item is currently paused and cannot be rented.
+    </p>
   </div>
 </template>
 
@@ -105,13 +108,13 @@ export default {
     const currentDate = new Date();
     return {
       item: {
-        imageUrls: [],
+        imageIds: [],
         prices: [],
         unavailableDates: [],
         minDays: 1,
         maxDays: 30,
       },
-      bookings: [], // Store item bookings
+      bookings: [],
       selectedDates: [],
       pickupTime: null,
       dropoffTime: null,
@@ -159,12 +162,10 @@ export default {
         this.dateValidationError = "Please select a start and end date";
         return false;
       }
-
       const start = new Date(this.selectedDates[0]);
       const end = new Date(this.selectedDates[1]);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-
       if (start < today) {
         this.dateValidationError = "Start date must be today or later";
         return false;
@@ -173,7 +174,6 @@ export default {
         this.dateValidationError = "End date must be after start date";
         return false;
       }
-
       const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       if (durationDays < this.item.minDays) {
         this.dateValidationError = `Rental must be at least ${this.item.minDays} days`;
@@ -183,7 +183,6 @@ export default {
         this.dateValidationError = `Rental cannot exceed ${this.item.maxDays} days`;
         return false;
       }
-
       const allDisabledDates = [
         ...this.item.unavailableDates,
         ...this.bookings.map((booking) => ({
@@ -191,7 +190,6 @@ export default {
           endDate: booking.endDate,
         })),
       ];
-
       for (const unavailable of allDisabledDates) {
         const unavailableStart = new Date(unavailable.startDate);
         const unavailableEnd = new Date(unavailable.endDate);
@@ -202,7 +200,6 @@ export default {
           return false;
         }
       }
-
       this.dateValidationError = "";
       return true;
     },
@@ -264,7 +261,7 @@ export default {
         );
         this.item = {
           ...response.data,
-          imageUrls: response.data.imageUrls || [],
+          imageIds: response.data.imageIds || [],
           prices: response.data.prices || [],
           minDays: response.data.minDays || 1,
           maxDays: response.data.maxDays || 30,
@@ -289,7 +286,7 @@ export default {
         );
         this.bookings = response.data.filter(
           (booking) => !["CANCELLED"].includes(booking.status)
-        ); // Exclude cancelled bookings
+        );
       } catch (error) {
         console.error(
           "Error fetching bookings:",

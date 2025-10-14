@@ -9,6 +9,9 @@
     <div v-else class="equipment-list">
       <div v-for="item in items" :key="item.id" class="equipment-item">
         <h3>{{ item.name }}</h3>
+        <div v-if="item.imageIds?.length" class="item-image">
+          <img :src="getImageUrl(item.imageIds[0])" alt="Item Image" />
+        </div>
         <p>{{ item.description }}</p>
         <p><strong>Status:</strong> {{ item.paused ? "Paused" : "Active" }}</p>
         <div class="prices">
@@ -107,6 +110,9 @@ export default {
         );
       }
     },
+    getImageUrl(imageId) {
+      return `/rentstuff/rentalitems/images/${imageId}`;
+    },
   },
 };
 </script>
@@ -120,6 +126,11 @@ export default {
   border: 1px solid #ccc;
   padding: 15px;
   border-radius: 5px;
+}
+.item-image img {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 10px;
 }
 .prices {
   margin: 10px 0;
