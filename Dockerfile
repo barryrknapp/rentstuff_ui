@@ -1,29 +1,38 @@
-FROM node:lts-alpine
+# Stage 1: Build the Vue.js application
+FROM node:lts-alpine AS build
 
-# install simple http server for serving static content
-RUN npm install -g http-server
-
-# make the 'app' folder the current working directory
+# Set working directory
 WORKDIR /app
 
-# copy both 'package.json' and 'package-lock.json' (if available)
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-#uncomment to build on windows
-ENV NODE_OPTIONS=--openssl-legacy-provider
-
-
-# install project dependencies
+# Install dependencies
 RUN npm install
 
+# Update Browserslist database (optional, can be removed if pinned in package.json)
 RUN npx update-browserslist-db@latest
 
-# copy project files and folders to the current working directory (i.e. 'app' folder)
+# Copy the rest of the application code
 COPY . .
 
-# build app for production with minification
-RUN npm run build --openssl-legacy-provider
-RUN npm run lint
+# Build the app for production
+RUN npm run build
 
+# Stage 2: Serve the built application
+FROM node:lts-alpine
+
+# Install http-server globally
+RUN npm install -g http-server
+
+# Set working directory
+WORKDIR /app
+
+# Copy only the built dist folder from the build stage
+COPY --from=build /app/dist ./dist
+
+# Expose port 8080
 EXPOSE 8080
-CMD [ "http-server", "dist" ]
+
+# Serve the application
+CMD ["http-server", "dist", "-p", "8080"]
