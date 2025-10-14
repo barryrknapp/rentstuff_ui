@@ -3,6 +3,12 @@
     <h2>{{ isEdit ? "Edit Rental Item" : "Add New Rental Item" }}</h2>
     <form @submit.prevent="submitForm">
       <div class="form-group">
+        <label for="paused"
+          >Paused (Click checkbox to prevent new rentals)</label
+        >
+        <input id="paused" v-model="form.paused" type="checkbox" />
+      </div>
+      <div class="form-group">
         <label for="name">Item Name</label>
         <input id="name" v-model="form.name" type="text" required />
       </div>
@@ -15,7 +21,10 @@
         ></textarea>
       </div>
       <div class="form-group">
-        <label>Prices</label>
+        <label
+          >Prices (You can add multiple prices to discount multi day
+          rentals)</label
+        >
         <div
           v-for="(price, index) in form.prices"
           :key="index"
@@ -118,6 +127,7 @@ export default {
         description: "",
         minDays: 1,
         maxDays: 30,
+        paused: false,
         imageUrls: [],
         taxonomyIds: [],
         unavailableDates: [],
@@ -144,7 +154,7 @@ export default {
       } catch (error) {
         console.error(
           "Error fetching taxonomies:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         this.$router.push("/error");
       }
@@ -166,11 +176,12 @@ export default {
           unavailableDates: response.data.unavailableDates || [],
           ownerId: response.data.ownerId,
           prices: response.data.prices || [],
+          paused: response.data.paused || false,
         };
       } catch (error) {
         console.error(
           "Error fetching item:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         this.$router.push("/error");
       }
@@ -190,7 +201,7 @@ export default {
       } catch (error) {
         console.error(
           "Error fetching user:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         this.$router.push("/login");
       }

@@ -5,7 +5,7 @@
         <nav>
           <div class="nav-left">
             <router-link to="/">RentStuff</router-link>
-            <router-link to="/new-item" class="ml-2">Add Equipment</router-link>
+            <!--router-link to="/new-item" class="ml-2">Add Equipment</router-link-->
             <router-link to="/my-equipment" class="ml-2"
               >My Equipment</router-link
             >
