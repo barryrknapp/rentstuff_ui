@@ -121,6 +121,7 @@ export default {
         const redirectPath = this.$route.query.redirect || "/";
         console.log("Redirecting to:", redirectPath);
         this.closeModal();
+        this.$emit("login-success"); // Emit event
         this.$router.push(redirectPath);
       } catch (error) {
         console.error("Login failed:", error.response?.data || error.message);
@@ -153,6 +154,7 @@ export default {
         const redirectPath = this.$route.query.redirect || "/";
         console.log("Redirecting to:", redirectPath);
         this.closeModal();
+        this.$emit("login-success"); // Emit event
         this.$router.push(redirectPath);
       } catch (error) {
         console.error(
