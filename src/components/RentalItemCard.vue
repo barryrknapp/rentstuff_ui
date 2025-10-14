@@ -1,16 +1,10 @@
 <template>
   <div class="rental-item-card">
-    <img
-      :src="
-        item.imageUrls && item.imageUrls.length > 0
-          ? item.imageUrls[0]
-          : 'https://via.placeholder.com/150'
-      "
-      alt="Rental Item"
-      class="item-image"
-    />
     <h3>{{ item.name || "Unnamed Item" }}</h3>
     <p>{{ item.description || "No description available" }}</p>
+    <div v-if="item.imageIds?.length" class="item-image">
+      <img :src="getImageUrl(item.imageIds[0])" alt="Item Image" />
+    </div>
     <router-link :to="`/item/${item.id}`" class="btn">View Details</router-link>
   </div>
 </template>
@@ -29,6 +23,11 @@ export default {
       }),
     },
   },
+  methods: {
+    getImageUrl(imageId) {
+      return `/rentstuff/rentalitems/images/${imageId}`;
+    },
+  },
 };
 </script>
 
@@ -41,8 +40,13 @@ export default {
   text-align: center;
 }
 .item-image {
-  max-width: 150px;
+  max-width: 20px;
   height: auto;
+}
+.item-image img {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 10px;
 }
 .btn {
   padding: 5px 10px;
