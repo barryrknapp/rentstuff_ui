@@ -69,16 +69,21 @@ export default {
         const token = localStorage.getItem("token");
         if (!token || token === "undefined") {
           console.error("No valid token found, redirecting to login");
-          this.$router.push("/login");
+          // Log the fullPath to verify
+          console.log("Current route fullPath:", this.$route.fullPath);
+          this.$router.push({
+            path: "/login",
+            query: { redirect: this.$route.fullPath },
+          });
           return;
         }
         await axios.post(
           `/rentstuff/bookings`,
           {
             itemId: this.item.id,
-            startDateTime: this.rentalDates.startDateTime,
-            endDateTime: this.rentalDates.endDateTime,
-            totalPrice: this.totalPrice,
+            startDate: this.rentalDates.startDateTime,
+            endDate: this.rentalDates.endDateTime,
+            totalPrice: this.totalPrice.toFixed(2),
           },
           {
             headers: { Authorization: `Bearer ${token}` },

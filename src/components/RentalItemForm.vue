@@ -108,6 +108,7 @@ import axios from "axios";
 import DateRangePicker from "../components/DateRangePicker.vue";
 
 export default {
+  name: "RentalItemForm",
   components: { DateRangePicker },
   data() {
     return {
@@ -118,11 +119,10 @@ export default {
         minDays: 1,
         maxDays: 30,
         imageUrls: [],
-        taxonomyId: null,
         taxonomyIds: [],
         unavailableDates: [],
         ownerId: null,
-        prices: [], // Updated to array of price objects
+        prices: [],
       },
       taxonomies: [],
     };
@@ -133,26 +133,7 @@ export default {
       this.isEdit = true;
       await this.fetchItem();
     } else {
-      const token = localStorage.getItem("token");
-      console.log("Retrieved Token:", token);
-      if (!token || token === "undefined") {
-        console.error("No valid token found, redirecting to login");
-        this.$router.push("/login");
-        return;
-      }
-      try {
-        const response = await axios.get("/rentstuff/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("User Response:", response.data);
-        this.form.ownerId = response.data.id;
-      } catch (error) {
-        console.error(
-          "Error fetching user:",
-          error.response?.data || error.message
-        );
-        this.$router.push("/login");
-      }
+      await this.fetchOwnerId();
     }
   },
   methods: {
@@ -161,13 +142,22 @@ export default {
         const response = await axios.get("/rentstuff/taxonomies");
         this.taxonomies = response.data;
       } catch (error) {
-        console.error("Error fetching taxonomies:", error);
+        console.error(
+          "Error fetching taxonomies:",
+          error.response?.data || error.message
+        );
+        this.$router.push("/error");
       }
     },
     async fetchItem() {
       try {
         const response = await axios.get(
-          `/rentstuff/rentalitems/${this.$route.params.id}`
+          `/rentstuff/rentalitems/${this.$route.params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
         this.form = {
           ...response.data,
@@ -175,10 +165,34 @@ export default {
           taxonomyIds: response.data.taxonomyIds || [],
           unavailableDates: response.data.unavailableDates || [],
           ownerId: response.data.ownerId,
-          prices: response.data.prices || [], // Updated to handle prices
+          prices: response.data.prices || [],
         };
       } catch (error) {
-        console.error("Error fetching item:", error);
+        console.error(
+          "Error fetching item:",
+          error.response?.data || error.message
+        );
+        this.$router.push("/error");
+      }
+    },
+    async fetchOwnerId() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token || token === "undefined") {
+          console.error("No valid token found, redirecting to login");
+          this.$router.push("/login");
+          return;
+        }
+        const response = await axios.get("/rentstuff/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        this.form.ownerId = response.data.id;
+      } catch (error) {
+        console.error(
+          "Error fetching user:",
+          error.response?.data || error.message
+        );
+        this.$router.push("/login");
       }
     },
     addImageUrl() {
@@ -196,8 +210,6 @@ export default {
     async submitForm() {
       try {
         const token = localStorage.getItem("token");
-        console.log("Submitting with Token:", token);
-        console.log("Form Data:", JSON.stringify(this.form));
         if (!token || token === "undefined") {
           console.error("No valid token found, redirecting to login");
           this.$router.push("/login");
@@ -209,7 +221,6 @@ export default {
           return;
         }
         if (!this.form.prices.length) {
-          console.error("At least one price is required");
           alert("Please add at least one price");
           return;
         }
@@ -221,14 +232,16 @@ export default {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert("Item saved successfully!");
-        this.$router.push("/");
+        this.$router.push("/my-equipment");
       } catch (error) {
         console.error(
           "Error saving item:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         alert(
-          "Failed to save item: " + (error.response?.data || error.message)
+          `Failed to save item: ${
+            error.response?.data?.message || error.message
+          }`
         );
       }
     },
@@ -236,7 +249,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 .form-group {
   margin-bottom: 15px;
 }
@@ -264,6 +277,7 @@ export default {
   color: white;
   border: none;
   cursor: pointer;
+  text-decoration: none;
 }
 .btn.secondary {
   background-color: #6c757d;
