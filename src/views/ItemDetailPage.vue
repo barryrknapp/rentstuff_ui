@@ -5,7 +5,7 @@
       <img
         v-for="imageId in item.imageIds"
         :key="imageId"
-        :src="`/rentstuff/rentalitems/images/${imageId}`"
+        :src="`getImageUrl(${imageId})`"
         alt="Rental Item"
       />
     </div>
@@ -107,6 +107,7 @@ export default {
   data() {
     const currentDate = new Date();
     return {
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
       item: {
         imageIds: [],
         prices: [],
@@ -293,6 +294,11 @@ export default {
           error.response?.data?.message || error.message
         );
       }
+    },
+    getImageUrl(imageId) {
+      return `${
+        import.meta.env.VITE_API_BASE_URL
+      }/rentstuff/rentalitems/images/${imageId}`;
     },
     async toggleItemReviews() {
       this.showItemReviews = !this.showItemReviews;

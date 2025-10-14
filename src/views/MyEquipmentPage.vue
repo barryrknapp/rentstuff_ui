@@ -111,7 +111,9 @@ export default {
       }
     },
     getImageUrl(imageId) {
-      return `/rentstuff/rentalitems/images/${imageId}`;
+      return `${
+        import.meta.env.VITE_API_BASE_URL
+      }/rentstuff/rentalitems/images/${imageId}`;
     },
   },
 };

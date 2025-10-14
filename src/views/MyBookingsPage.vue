@@ -13,9 +13,9 @@
           <img
             :src="
               items[booking.itemId].imageIds?.[0]
-                ? `/rentstuff/rentalitems/images/${
+                ? `getImageUrl(${
                     items[booking.itemId].imageIds[0]
-                  }`
+                  }`)
                 : 'https://via.placeholder.com/100'
             "
             alt="Item Image"
@@ -117,6 +117,11 @@ export default {
     await this.fetchMyBookings();
   },
   methods: {
+    getImageUrl(imageId) {
+      return `${
+        import.meta.env.VITE_API_BASE_URL
+      }/rentstuff/rentalitems/images/${imageId}`;
+    },
     async fetchMyBookings() {
       try {
         this.loading = true;
