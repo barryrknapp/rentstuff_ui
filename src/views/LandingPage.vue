@@ -29,6 +29,7 @@ export default {
     try {
       const response = await axios.get("/rentstuff/rentalitems");
       this.rentalItems = response.data;
+      console.log("API base url " + this.apiBaseUrl);
     } catch (error) {
       console.error(
         "Error fetching rental items:",

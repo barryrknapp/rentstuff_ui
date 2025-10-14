@@ -2,12 +2,9 @@
   <div>
     <h2>{{ item.name || "Unnamed Item" }}</h2>
     <div class="image-gallery">
-      <img
-        v-for="imageId in item.imageIds"
-        :key="imageId"
-        :src="`getImageUrl(${imageId})`"
-        alt="Rental Item"
-      />
+      <div v-for="(imageId, index) in item.imageIds" :key="imageId.id || index">
+        <img :src="getImageUrl(imageId)" alt="Item Image" />
+      </div>
     </div>
     <p>{{ item.description || "No description available" }}</p>
     <div v-for="price in item.prices" :key="price.id">
@@ -296,6 +293,7 @@ export default {
       }
     },
     getImageUrl(imageId) {
+      console.log("Vite URL " + import.meta.env.VITE_API_BASE_URL);
       return `${
         import.meta.env.VITE_API_BASE_URL
       }/rentstuff/rentalitems/images/${imageId}`;

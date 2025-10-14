@@ -105,7 +105,7 @@
           class="image-preview"
         >
           <img
-            :src="`/rentstuff/rentalitems/images/${imageId}?t=${Date.now()}`"
+            :src="`getImageUrl(${imageId})`"
             alt="Existing Image"
             style="max-width: 100px"
             @error="handleImageError(imageId)"
@@ -195,6 +195,11 @@ export default {
     }
   },
   methods: {
+    getImageUrl(imageId) {
+      return `${
+        import.meta.env.VITE_API_BASE_URL
+      }/rentstuff/rentalitems/images/${imageId}`;
+    },
     async fetchTaxonomies() {
       try {
         const response = await axios.get("/rentstuff/taxonomies");

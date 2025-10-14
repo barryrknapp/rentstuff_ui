@@ -11,13 +11,9 @@
         <h3>Booking #{{ booking.id }}</h3>
         <div v-if="items[booking.itemId]" class="item-details">
           <img
-            :src="
-              items[booking.itemId].imageIds?.[0]
-                ? `getImageUrl(${
-                    items[booking.itemId].imageIds[0]
-                  }`)
-                : 'https://via.placeholder.com/100'
-            "
+            :src="`items[booking.itemId].imageIds?.[0]
+                ? getImageUrl(${items[booking.itemId].imageIds[0]})
+                : 'https://via.placeholder.com/100'`"
             alt="Item Image"
             class="item-image"
           />
@@ -118,9 +114,10 @@ export default {
   },
   methods: {
     getImageUrl(imageId) {
-      return `${
-        import.meta.env.VITE_API_BASE_URL
-      }/rentstuff/rentalitems/images/${imageId}`;
+      return;
+      import.meta.env.VITE_API_BASE_URL +
+        "/rentstuff/rentalitems/images/" +
+        imageId;
     },
     async fetchMyBookings() {
       try {

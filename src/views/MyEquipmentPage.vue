@@ -9,8 +9,13 @@
     <div v-else class="equipment-list">
       <div v-for="item in items" :key="item.id" class="equipment-item">
         <h3>{{ item.name }}</h3>
-        <div v-if="item.imageIds?.length" class="item-image">
-          <img :src="getImageUrl(item.imageIds[0])" alt="Item Image" />
+        <div class="image-gallery">
+          <div
+            v-for="(imageId, index) in item.imageIds"
+            :key="imageId.id || index"
+          >
+            <img :src="getImageUrl(imageId)" alt="Item Image" />
+          </div>
         </div>
         <p>{{ item.description }}</p>
         <p><strong>Status:</strong> {{ item.paused ? "Paused" : "Active" }}</p>
@@ -164,5 +169,14 @@ export default {
 .no-items {
   color: #6c757d;
   font-style: italic;
+}
+.image-gallery {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+.image-gallery img {
+  max-width: 300px;
+  height: auto;
 }
 </style>
