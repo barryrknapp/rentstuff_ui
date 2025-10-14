@@ -102,7 +102,7 @@ import "@vuepic/vue-datepicker/dist/main.css";
 export default {
   components: { VueDatePicker },
   data() {
-    const currentDate = new Date(); // October 10, 2025
+    const currentDate = new Date();
     return {
       item: {
         imageUrls: [],
@@ -111,9 +111,10 @@ export default {
         minDays: 1,
         maxDays: 30,
       },
-      selectedDates: [], // Array for range selection
-      pickupTime: null, // e.g., "08:00"
-      dropoffTime: null, // e.g., "17:00"
+      bookings: [], // Store item bookings
+      selectedDates: [],
+      pickupTime: null,
+      dropoffTime: null,
       itemReviews: [],
       userReviews: [],
       showItemReviews: false,
@@ -121,12 +122,12 @@ export default {
       dateValidationError: "",
       currentDateString: `${currentDate.getFullYear()}-${String(
         currentDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`, // e.g., "2025-10-10"
-      currentMonth: currentDate.getMonth(), // 9 for October (0-based)
-      currentYear: currentDate.getFullYear(), // 2025
+      ).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`,
+      currentMonth: currentDate.getMonth(),
+      currentYear: currentDate.getFullYear(),
       modelConfig: {
         type: "string",
-        mask: "YYYY-MM-DD", // Ensure dates are YYYY-MM-DD strings
+        mask: "YYYY-MM-DD",
       },
     };
   },
@@ -173,7 +174,7 @@ export default {
         return false;
       }
 
-      const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+      const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
       if (durationDays < this.item.minDays) {
         this.dateValidationError = `Rental must be at least ${this.item.minDays} days`;
         return false;
@@ -183,11 +184,21 @@ export default {
         return false;
       }
 
-      for (const unavailable of this.item.unavailableDates) {
+      const allDisabledDates = [
+        ...this.item.unavailableDates,
+        ...this.bookings.map((booking) => ({
+          startDate: booking.startDate,
+          endDate: booking.endDate,
+        })),
+      ];
+
+      for (const unavailable of allDisabledDates) {
         const unavailableStart = new Date(unavailable.startDate);
         const unavailableEnd = new Date(unavailable.endDate);
         if (start <= unavailableEnd && end >= unavailableStart) {
-          this.dateValidationError = `Selected dates overlap with unavailable dates (${unavailable.startDate} to ${unavailable.endDate})`;
+          this.dateValidationError = `Selected dates overlap with unavailable or booked dates (${this.formatDate(
+            unavailable.startDate
+          )} to ${this.formatDate(unavailable.endDate)})`;
           return false;
         }
       }
@@ -217,7 +228,14 @@ export default {
     },
     disabledDates() {
       return (date) => {
-        return this.item.unavailableDates.some((unavailable) => {
+        const allDisabledDates = [
+          ...this.item.unavailableDates,
+          ...this.bookings.map((booking) => ({
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+          })),
+        ];
+        return allDisabledDates.some((unavailable) => {
           const start = new Date(unavailable.startDate);
           const end = new Date(unavailable.endDate);
           return date >= start && date <= end;
@@ -226,7 +244,7 @@ export default {
     },
   },
   async created() {
-    await this.fetchItem();
+    await Promise.all([this.fetchItem(), this.fetchBookings()]);
   },
   mounted() {
     console.log("Current date string:", this.currentDateString);
@@ -255,7 +273,27 @@ export default {
       } catch (error) {
         console.error(
           "Error fetching item:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
+        );
+      }
+    },
+    async fetchBookings() {
+      try {
+        const response = await axios.get(
+          `/rentstuff/bookings/item/${this.$route.params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        this.bookings = response.data.filter(
+          (booking) => !["CANCELLED"].includes(booking.status)
+        ); // Exclude cancelled bookings
+      } catch (error) {
+        console.error(
+          "Error fetching bookings:",
+          error.response?.data?.message || error.message
         );
       }
     },
@@ -292,7 +330,6 @@ export default {
       }
     },
     handleDateUpdate(dates) {
-      // Convert Date objects to YYYY-MM-DD strings
       this.selectedDates = dates.map((date) => {
         if (date instanceof Date) {
           const year = date.getFullYear();
@@ -306,7 +343,6 @@ export default {
       this.validateDates();
     },
     handleTimeUpdate(time, isPickup) {
-      // Convert time object or string to HH:mm string
       let timeStr;
       if (
         time &&
@@ -337,6 +373,10 @@ export default {
     },
     validateTimes() {
       this.isValidTimes;
+    },
+    formatDate(date) {
+      if (!date) return "N/A";
+      return new Date(date).toLocaleString();
     },
     logRedirect() {
       console.log("Redirecting with:", {

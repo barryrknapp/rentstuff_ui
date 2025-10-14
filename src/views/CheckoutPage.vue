@@ -90,7 +90,7 @@ export default {
           }
         );
         alert("Rental confirmed!");
-        this.$router.push("/");
+        this.$router.push("/my-bookings");
       } catch (error) {
         console.error(
           "Error confirming rental:",

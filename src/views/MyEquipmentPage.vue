@@ -4,7 +4,7 @@
     <div v-if="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="items.length === 0" class="no-items">
-      You have no equipment listed for rental.
+      <h2>You have no equipment listed for rental.</h2>
     </div>
     <div v-else class="equipment-list">
       <div v-for="item in items" :key="item.id" class="equipment-item">

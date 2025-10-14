@@ -37,55 +37,13 @@
             booking.paymentIds.length ? booking.paymentIds.join(", ") : "None"
           }}
         </p>
-        <div class="actions">
-          <button
-            v-if="canEdit(booking.status)"
-            class="btn"
-            @click="openEditModal(booking)"
-          >
-            Edit
-          </button>
-          <button
-            v-if="canDelete(booking.status)"
-            class="btn remove"
-            @click="deleteBooking(booking.id)"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Edit Booking Modal -->
-    <div v-if="showEditModal" class="modal-backdrop">
-      <div class="modal">
-        <h3>Edit Booking #{{ editForm.id }}</h3>
-        <form @submit.prevent="submitEditForm">
-          <div class="form-group">
-            <label for="startDate">Start Date</label>
-            <DateRangePicker
-              v-model="editForm.dates"
-              :single-date="true"
-              date-type="start"
-            />
-          </div>
-          <div class="form-group">
-            <label for="endDate">End Date</label>
-            <DateRangePicker
-              v-model="editForm.dates"
-              :single-date="true"
-              date-type="end"
-            />
-          </div>
-          <button type="submit" class="btn">Save Changes</button>
-          <button
-            type="button"
-            class="btn close"
-            @click="showEditModal = false"
-          >
-            Cancel
-          </button>
-        </form>
+        <button
+          v-if="canDelete(booking.status)"
+          class="btn remove"
+          @click="deleteBooking(booking.id)"
+        >
+          Delete
+        </button>
       </div>
     </div>
   </div>
