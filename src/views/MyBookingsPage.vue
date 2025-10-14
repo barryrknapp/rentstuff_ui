@@ -8,16 +8,15 @@
     </div>
     <div v-else class="booking-list">
       <div v-for="booking in bookings" :key="booking.id" class="booking-item">
+        <p><strong>Item:</strong> {{ items[booking.itemId].name }}</p>
         <h3>Booking #{{ booking.id }}</h3>
         <div v-if="items[booking.itemId]" class="item-details">
-          <img
-            :src="`items[booking.itemId].imageIds?.[0]
-                ? getImageUrl(${items[booking.itemId].imageIds[0]})
-                : 'https://via.placeholder.com/100'`"
-            alt="Item Image"
-            class="item-image"
-          />
-          <p><strong>Item:</strong> {{ items[booking.itemId].name }}</p>
+          <div v-if="items[booking.itemId].imageIds?.length" class="item-image">
+            <img
+              :src="getImageUrl(items[booking.itemId].imageIds[0])"
+              alt="Item Image"
+            />
+          </div>
         </div>
         <p v-else><strong>Item:</strong> Loading...</p>
         <p><strong>Start Date:</strong> {{ formatDate(booking.startDate) }}</p>
@@ -114,10 +113,10 @@ export default {
   },
   methods: {
     getImageUrl(imageId) {
-      return;
-      import.meta.env.VITE_API_BASE_URL +
-        "/rentstuff/rentalitems/images/" +
-        imageId;
+      console.log("Vite URL " + import.meta.env.VITE_API_BASE_URL);
+      return `${
+        import.meta.env.VITE_API_BASE_URL
+      }/rentstuff/rentalitems/images/${imageId}`;
     },
     async fetchMyBookings() {
       try {
@@ -338,5 +337,14 @@ export default {
 .form-group label {
   display: block;
   font-weight: bold;
+}
+.item-image {
+  max-width: 20px;
+  height: auto;
+}
+.item-image img {
+  max-width: 100px;
+  height: auto;
+  margin-bottom: 10px;
 }
 </style>
