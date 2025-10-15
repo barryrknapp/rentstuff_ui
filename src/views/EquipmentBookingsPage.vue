@@ -4,7 +4,7 @@
     <div v-if="loading">Loading...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else-if="bookings.length === 0" class="no-bookings">
-      No bookings for this equipment.
+      <h1>No bookings for this equipment.</h1>
     </div>
     <div v-else class="booking-list">
       <div v-if="itemImage" class="item-details">
