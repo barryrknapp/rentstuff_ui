@@ -52,12 +52,13 @@ import axios from "axios";
 export default {
   data() {
     return {
+      apiBaseUrl:
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/rentstuff",
       bookings: [],
       itemName: "",
       itemImage: "",
       loading: false,
       error: null,
-      apiBaseUrl: import.meta.env.VITE_API_BASE_URL,
     };
   },
   async created() {
@@ -83,7 +84,7 @@ export default {
         );
         this.itemName = itemResponse.data.name;
         this.itemImage = itemResponse.data.imageIds?.length
-          ? `${apiBaseUrl}/rentstuff/rentalitems/images/${itemResponse.data.imageIds[0]}`
+          ? `${this.apiBaseUrl}/rentstuff/rentalitems/images/${itemResponse.data.imageIds[0]}`
           : "https://via.placeholder.com/100";
 
         const bookingsResponse = await axios.get(
