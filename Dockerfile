@@ -19,20 +19,17 @@ COPY . .
 # Build the app for production
 RUN npm run build
 
-# Stage 2: Serve the built application
-FROM node:lts-alpine
+# Stage 2: Serve the built application with Nginx
+FROM nginx:alpine
 
-# Install http-server globally
-RUN npm install -g http-server
+# Copy the built dist folder from the build stage
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Set working directory
-WORKDIR /app
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy only the built dist folder from the build stage
-COPY --from=build /app/dist ./dist
-
-# Expose port 8080
+# Expose port 8080 (internal container port)
 EXPOSE 8080
 
-# Serve the application
-CMD ["http-server", "dist", "-p", "8080"]
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]

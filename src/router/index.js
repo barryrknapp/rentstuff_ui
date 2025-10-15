@@ -23,6 +23,12 @@ const routes = [
     path: "/equipment/:id/bookings",
     component: EquipmentBookingsPage,
   },
+  // Catch-all 404 route for deep linking
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: ErrorPage, // Or a dedicated 404 component
+  },
 ];
 
 const router = createRouter({
