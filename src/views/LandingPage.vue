@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h1>Rental Items</h1>
     <div class="items">
       <RentalItemCard
         v-for="item in rentalItems"

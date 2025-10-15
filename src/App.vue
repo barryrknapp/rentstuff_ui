@@ -4,7 +4,9 @@
       <div class="container">
         <nav>
           <div class="nav-left">
-            <router-link to="/">RentStuff</router-link>
+            <router-link to="/"
+              ><img src="@/assets/images/logo.png" class="image-header"
+            /></router-link>
             <!--router-link to="/new-item" class="ml-2">Add Equipment</router-link-->
             <router-link to="/my-equipment" class="ml-2"
               >My Equipment</router-link
@@ -98,6 +100,10 @@ export default {
 </script>
 
 <style scoped>
+.image-header {
+  max-width: 200px;
+  height: auto;
+}
 .ml-2 {
   margin-left: 1rem;
 }
