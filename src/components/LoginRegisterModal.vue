@@ -1,16 +1,12 @@
 <template>
   <div v-if="isVisible" class="modal">
-    <div class="tabs">
-      <button :class="{ active: isLogin }" @click="isLogin = true">
-        Login
-      </button>
-      <button :class="{ active: !isLogin }" @click="isLogin = false">
-        Register
-      </button>
-    </div>
-
     <!-- Login Form -->
     <form v-if="isLogin" @submit.prevent="login">
+      <div class="tabs">
+        <button :class="{ active: !isLogin }" @click="isLogin = false">
+          Register
+        </button>
+      </div>
       <h2>Login</h2>
       <div class="form-group">
         <label for="login-email">Email</label>
@@ -31,6 +27,7 @@
         />
       </div>
       <button type="submit" class="btn">Login</button>
+      <button class="btn close" @click="closeModal">Close</button>
     </form>
 
     <!-- Register Form -->
@@ -73,8 +70,8 @@
         />
       </div>
       <button type="submit" class="btn">Register</button>
+      <button class="btn close" @click="closeModal">Close</button>
     </form>
-    <button class="btn close" @click="closeModal">Close</button>
   </div>
 </template>
 
@@ -108,7 +105,7 @@ export default {
         const token = response.data;
         console.log("Login Response Token:", token);
         if (!token || typeof token !== "string" || !token.startsWith("eyJ")) {
-          throw new Error("Invalid token received");
+          throw new Error("Invalid credentials");
         }
         localStorage.setItem("token", token);
         console.log(
