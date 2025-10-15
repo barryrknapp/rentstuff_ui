@@ -58,7 +58,7 @@ export default {
     } catch (error) {
       console.error(
         "Error fetching item or price:",
-        error.response?.data || error.message
+        error.response?.data?.message || error.message
       );
       this.totalPrice = null;
     }
@@ -94,10 +94,11 @@ export default {
       } catch (error) {
         console.error(
           "Error confirming rental:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         alert(
-          "Failed to confirm rental: " + (error.response?.data || error.message)
+          "Failed to confirm rental: " +
+            (error.response?.data?.message || error.message)
         );
       }
     },

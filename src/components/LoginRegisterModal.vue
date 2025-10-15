@@ -121,8 +121,13 @@ export default {
         this.$emit("login-success"); // Emit event
         this.$router.push(redirectPath);
       } catch (error) {
-        console.error("Login failed:", error.response?.data || error.message);
-        alert("Login failed: " + (error.response?.data || error.message));
+        console.error(
+          "Login failed:",
+          error.response?.data?.message || error.message
+        );
+        alert(
+          "Login failed: " + (error.response?.data?.message || error.message)
+        );
       }
     },
 
@@ -156,10 +161,11 @@ export default {
       } catch (error) {
         console.error(
           "Registration failed:",
-          error.response?.data || error.message
+          error.response?.data?.message || error.message
         );
         alert(
-          "Registration failed: " + (error.response?.data || error.message)
+          "Registration failed: " +
+            (error.response?.data?.message || error.message)
         );
       }
     },

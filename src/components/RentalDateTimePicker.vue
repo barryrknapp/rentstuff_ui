@@ -144,18 +144,27 @@ export default {
         return false;
       }
       const allDisabledDates = [
-        ...this.item.unavailableDates,
+        ...(this.item.unavailableDates || []).map((range) => ({
+          startDate: range.startDate,
+          endDate: range.endDate,
+        })),
         ...this.bookings.map((booking) => ({
-          startDate: booking.startDate,
-          endDate: booking.endDate,
+          startDate: this.toDateString(booking.startDate),
+          endDate: this.toDateString(booking.endDate),
         })),
       ];
       for (const unavailable of allDisabledDates) {
-        const unavailableStart = new Date(
-          this.toDateString(unavailable.startDate)
-        );
-        const unavailableEnd = new Date(this.toDateString(unavailable.endDate));
-        if (start <= unavailableEnd && end >= unavailableStart) {
+        const unavailableStart = new Date(unavailable.startDate);
+        const unavailableEnd = new Date(unavailable.endDate);
+        unavailableEnd.setDate(unavailableEnd.getDate() + 1); // Include end date
+        if (
+          isNaN(unavailableStart.getTime()) ||
+          isNaN(unavailableEnd.getTime())
+        ) {
+          console.error(`Invalid date range: ${JSON.stringify(unavailable)}`);
+          continue;
+        }
+        if (start < unavailableEnd && end >= unavailableStart) {
           this.dateValidationError = `Selected dates overlap with unavailable or booked dates (${this.formatDate(
             unavailable.startDate
           )} to ${this.formatDate(unavailable.endDate)})`;
@@ -193,25 +202,36 @@ export default {
     },
     disabledDates() {
       return (date) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (date < today) {
-          return true; // Disable dates before today
-        }
         const allDisabledDates = [
           ...(this.item.unavailableDates || []).map((range) => ({
-            startDate: this.toDateString(range.startDate || range.start),
-            endDate: this.toDateString(range.endDate || range.end),
+            startDate: range.startDate,
+            endDate: range.endDate,
           })),
           ...this.bookings.map((booking) => ({
             startDate: this.toDateString(booking.startDate),
             endDate: this.toDateString(booking.endDate),
           })),
         ];
+        console.log("Disabled date ranges:", allDisabledDates);
         const disabled = allDisabledDates.some((unavailable) => {
-          const start = new Date(unavailable.startDate);
-          const end = new Date(unavailable.endDate);
-          return date >= start && date <= end;
+          try {
+            const start = new Date(unavailable.startDate);
+            const end = new Date(unavailable.endDate);
+            end.setDate(end.getDate() + 1); // Include end date
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+              console.error(
+                `Invalid date range: ${JSON.stringify(unavailable)}`
+              );
+              return false;
+            }
+            return date >= start && date < end;
+          } catch (e) {
+            console.error(
+              `Error processing date range: ${JSON.stringify(unavailable)}`,
+              e
+            );
+            return false;
+          }
         });
         if (disabled) {
           console.log(`Disabled date: ${date.toISOString().split("T")[0]}`);
@@ -226,10 +246,15 @@ export default {
       this.isInputVisible =
         inputs.length > 0 && inputs[0].offsetParent !== null;
       console.log("VueDatePicker inputs visible:", this.isInputVisible);
-      // Log sample disabled dates for debugging
-      const testDate = new Date();
-      testDate.setDate(testDate.getDate() + 1); // Tomorrow
-      console.log("Test date disabled:", this.disabledDates(testDate));
+      console.log("Item unavailableDates:", this.item.unavailableDates);
+      console.log("Bookings:", this.bookings);
+      const testDates = ["2025-10-17", "2025-10-18"];
+      testDates.forEach((testDate) => {
+        console.log(
+          `Test date (${testDate}) disabled:`,
+          this.disabledDates(new Date(testDate))
+        );
+      });
     });
   },
   methods: {
@@ -285,7 +310,12 @@ export default {
     },
     toDateString(dateStr) {
       if (!dateStr) return null;
-      const date = new Date(dateStr);
+      const [year, month, day] = dateStr.split("T")[0].split("-").map(Number);
+      const date = new Date(year, month - 1, day);
+      if (isNaN(date.getTime())) {
+        console.error(`Invalid date string: ${dateStr}`);
+        return null;
+      }
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
         2,
         "0"

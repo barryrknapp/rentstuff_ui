@@ -2,7 +2,7 @@
   <div class="image-gallery">
     <div v-for="(imageId, index) in item.imageIds" :key="imageId.id || index">
       <img
-        :src="`${apiBaseUrl}/rentstuff/rentalitems/images/${imageId}?t=${Date.now()}`"
+        :src="`${apiBaseUrl}/rentstuff/rentalitems/images/${imageId}`"
         alt="Item Image"
         @error="$emit('image-error', imageId)"
       />
