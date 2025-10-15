@@ -36,13 +36,13 @@
           }}
         </p>
         <div class="actions">
-          <button
+          <!--button
             v-if="canEdit(booking.status)"
             class="btn"
             @click="openEditModal(booking)"
           >
             Edit
-          </button>
+          </button-->
           <button
             v-if="canDelete(booking.status)"
             class="btn remove"
