@@ -105,7 +105,7 @@
           class="image-preview"
         >
           <img
-            :src="`getImageUrl(${imageId})`"
+            :src="getImageUrl(imageId)"
             alt="Existing Image"
             style="max-width: 100px"
             @error="handleImageError(imageId)"

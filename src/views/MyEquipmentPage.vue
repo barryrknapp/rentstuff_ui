@@ -1,8 +1,10 @@
 <template>
   <div>
     <h2>My Equipment</h2>
-    <div v-if="loading">Loading...</div>
-    <div v-else-if="error" class="error">{{ error }}</div>
+    <div v-if="loading"><h2>Loading...</h2></div>
+    <div v-else-if="error" class="error">
+      <h2>{{ error }}</h2>
+    </div>
     <div v-else-if="items.length === 0" class="no-items">
       <h2>You have no equipment listed for rental.</h2>
     </div>
@@ -42,9 +44,11 @@
         </div>
       </div>
     </div>
-    <router-link to="/new-item" class="btn secondary"
-      >Add New Equipment</router-link
-    >
+    <div>
+      <router-link to="/new-item" class="btn secondary"
+        >Add New Equipment</router-link
+      >
+    </div>
   </div>
 </template>
 
