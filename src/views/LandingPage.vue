@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="summary">
-      List your gear for free, earn cash. Need equipment? Rent what's listed, no
-      fees. Your stuff, your rules—join the RentStuff CLUB today!
+      List gear free, earn cash. Rent with no site fees. Your stuff, your
+      rules—join RentStuff CLUB today!
     </div>
     <div class="filter">
       <div class="form-group">
