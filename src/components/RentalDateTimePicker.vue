@@ -212,7 +212,7 @@ export default {
             endDate: this.toDateString(booking.endDate),
           })),
         ];
-        console.log("Disabled date ranges:", allDisabledDates);
+        //console.log("Disabled date ranges:", allDisabledDates);
         const disabled = allDisabledDates.some((unavailable) => {
           try {
             const start = new Date(unavailable.startDate);
@@ -233,9 +233,9 @@ export default {
             return false;
           }
         });
-        if (disabled) {
-          console.log(`Disabled date: ${date.toISOString().split("T")[0]}`);
-        }
+        //if (disabled) {
+        //console.log(`Disabled date: ${date.toISOString().split("T")[0]}`);
+        //}
         return disabled;
       };
     },
@@ -248,13 +248,13 @@ export default {
       console.log("VueDatePicker inputs visible:", this.isInputVisible);
       console.log("Item unavailableDates:", this.item.unavailableDates);
       console.log("Bookings:", this.bookings);
-      const testDates = ["2025-10-17", "2025-10-18"];
-      testDates.forEach((testDate) => {
-        console.log(
-          `Test date (${testDate}) disabled:`,
-          this.disabledDates(new Date(testDate))
-        );
-      });
+      //const testDates = ["2025-10-17", "2025-10-18"];
+      //testDates.forEach((testDate) => {
+      //  console.log(
+      //    `Test date (${testDate}) disabled:`,
+      //    this.disabledDates(new Date(testDate))
+      //  );
+      //});
     });
   },
   methods: {
