@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="summary">
-      List gear free, earn cash. Rent with no site fees. Your stuff, your
+      List gear free, earn cash. Rent with no platform fees. Your stuff, your
       rules—join RentStuff CLUB today!
     </div>
     <div class="filter">

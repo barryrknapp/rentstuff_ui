@@ -8,6 +8,7 @@ import MyEquipmentPage from "../views/MyEquipmentPage.vue";
 import ErrorPage from "../components/ErrorPage.vue"; // Optional: for error redirects
 import LoginRegisterModal from '../components/LoginRegisterModal.vue';
 import EquipmentBookingsPage from "../views/EquipmentBookingsPage.vue";
+import TermsAndConditionsPage from "../views/TermsAndConditionsPage.vue";
 
 const routes = [
   { path: '/', component: LandingPage },
@@ -22,6 +23,11 @@ const routes = [
   {
     path: "/equipment/:id/bookings",
     component: EquipmentBookingsPage,
+  },
+  {
+    path: '/terms',
+    name: 'TermsAndConditions',
+    component: TermsAndConditionsPage,
   },
   // Catch-all 404 route for deep linking
   {

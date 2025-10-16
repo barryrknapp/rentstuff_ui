@@ -31,7 +31,10 @@
       <router-view />
     </main>
     <footer>
-      <p>&copy; 2025 RentStuff</p>
+      <p>
+        <router-link to="/terms">Terms and Conditions</router-link> &copy; 2025
+        RentStuff
+      </p>
     </footer>
     <LoginRegisterModal
       v-if="showModal"
