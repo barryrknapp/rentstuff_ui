@@ -1,5 +1,12 @@
 <template>
   <div class="item-details">
+    <div class="location">
+      <h3>Location</h3>
+      <p v-if="item.city && item.state">
+        {{ item.city }}, {{ item.state }} {{ item.zipCode ? item.zipCode : "" }}
+      </p>
+      <p v-else>Not specified</p>
+    </div>
     <h2>{{ item.name || "Unnamed Item" }}</h2>
     <p>{{ item.description || "No description available" }}</p>
     <div v-for="price in item.prices" :key="price.id">

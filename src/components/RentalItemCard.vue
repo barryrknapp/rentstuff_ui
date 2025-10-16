@@ -1,10 +1,11 @@
 <template>
   <div class="rental-item-card">
     <h3>{{ item.name || "Unnamed Item" }}</h3>
-    <p>{{ item.description || "No description available" }}</p>
+    <p>{{ item.description }}</p>
     <div v-if="item.imageIds?.length" class="item-image">
       <img :src="getImageUrl(item.imageIds[0])" alt="Item Image" />
     </div>
+    <p>{{ item.city }}, {{ item.state }}</p>
     <router-link :to="`/item/${item.id}`" class="btn">View Details</router-link>
   </div>
 </template>

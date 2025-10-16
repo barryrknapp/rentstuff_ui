@@ -15,6 +15,30 @@
           required
         ></textarea>
       </div>
+      <!-- Location Fields -->
+      <div class="form-group">
+        <label for="city">City</label>
+        <input id="city" v-model="form.city" type="text" required />
+      </div>
+      <div class="form-group">
+        <label for="state">State</label>
+        <select id="state" v-model="form.state" required>
+          <option value="" disabled>Select a state</option>
+          <option v-for="state in states" :key="state" :value="state">
+            {{ state }}
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="zipCode">ZIP Code (Optional)</label>
+        <input
+          id="zipCode"
+          v-model="form.zipCode"
+          type="text"
+          pattern="\d{5}"
+          title="Enter a 5-digit ZIP code"
+        />
+      </div>
       <div class="form-group">
         <label>Prices</label>
         <div
@@ -169,6 +193,9 @@ export default {
       form: {
         name: "",
         description: "",
+        city: "", // New field
+        state: "", // New field
+        zipCode: "", // New field
         minDays: 1,
         maxDays: 30,
         paused: false,
@@ -182,6 +209,59 @@ export default {
       taxonomies: [],
       uploading: false,
       imageErrors: new Set(),
+      // US states for dropdown
+      states: [
+        "AL",
+        "AK",
+        "AZ",
+        "AR",
+        "CA",
+        "CO",
+        "CT",
+        "DE",
+        "FL",
+        "GA",
+        "HI",
+        "ID",
+        "IL",
+        "IN",
+        "IA",
+        "KS",
+        "KY",
+        "LA",
+        "ME",
+        "MD",
+        "MA",
+        "MI",
+        "MN",
+        "MS",
+        "MO",
+        "MT",
+        "NE",
+        "NV",
+        "NH",
+        "NJ",
+        "NM",
+        "NY",
+        "NC",
+        "ND",
+        "OH",
+        "OK",
+        "OR",
+        "PA",
+        "RI",
+        "SC",
+        "SD",
+        "TN",
+        "TX",
+        "UT",
+        "VT",
+        "VA",
+        "WA",
+        "WV",
+        "WI",
+        "WY",
+      ],
     };
   },
   async created() {
@@ -234,6 +314,9 @@ export default {
               ? response.data.prices
               : [{ price: 0, minDaysRented: 1 }],
           paused: response.data.paused || false,
+          city: response.data.city || "", // New field
+          state: response.data.state || "", // New field
+          zipCode: response.data.zipCode || "", // New field
         };
       } catch (error) {
         console.error(
@@ -381,6 +464,10 @@ export default {
           alert("Please add at least one price");
           return;
         }
+        if (!this.form.city || !this.form.state) {
+          alert("Please provide both city and state");
+          return;
+        }
 
         // Update item
         const formData = new FormData();
@@ -392,6 +479,9 @@ export default {
                 id: this.form.id,
                 name: this.form.name,
                 description: this.form.description,
+                city: this.form.city, // New field
+                state: this.form.state, // New field
+                zipCode: this.form.zipCode, // New field
                 minDays: this.form.minDays,
                 maxDays: this.form.maxDays,
                 paused: this.form.paused,
@@ -437,9 +527,7 @@ export default {
               minDaysRented: price.minDaysRented,
               itemId,
             },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
         }
 
@@ -455,9 +543,7 @@ export default {
               endDate: date.endDate,
               itemId,
             },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
         }
 
