@@ -30,7 +30,7 @@
         </select>
       </div>
       <div class="form-group">
-        <label for="zipCode">ZIP Code (Optional)</label>
+        <label for="zipCode">ZIP Code</label>
         <input
           id="zipCode"
           v-model="form.zipCode"
