@@ -9,8 +9,8 @@
       </p>
     </div>
     <p>
-      Rental Period: {{ rentalDates.startDateTime }} to
-      {{ rentalDates.endDateTime }}
+      Rental Period: {{ formatDateTime(rentalDates.startDateTime) }} to
+      {{ formatDateTime(rentalDates.endDateTime) }}
     </p>
     <p v-if="totalPrice !== null" class="total-price">
       Total Price: ${{ totalPrice.toFixed(2) }} for {{ rentalDays }} days
@@ -64,12 +64,32 @@ export default {
     }
   },
   methods: {
+    formatDateTime(isoDateTime) {
+      if (!isoDateTime) return "N/A";
+      try {
+        const date = new Date(isoDateTime);
+        if (isNaN(date.getTime())) {
+          console.error(`Invalid date: ${isoDateTime}`);
+          return "Invalid date";
+        }
+        return date.toLocaleString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        });
+      } catch (error) {
+        console.error(`Error formatting date ${isoDateTime}:`, error.message);
+        return "Invalid date";
+      }
+    },
     async confirmRental() {
       try {
         const token = localStorage.getItem("token");
         if (!token || token === "undefined") {
           console.error("No valid token found, redirecting to login");
-          // Log the fullPath to verify
           console.log("Current route fullPath:", this.$route.fullPath);
           this.$router.push({
             path: "/login",
