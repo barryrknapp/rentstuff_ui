@@ -1,21 +1,19 @@
 <template>
   <div>
     <div class="summary">
-      List gear free, earn cash. Rent with no platform fees. Your stuff, your
+      List gear free, earn cash. Rent with no site fees. Your stuff, your
       rules—join RentStuff CLUB today!
     </div>
     <div class="filter">
-      <div class="form-group">
-        <label for="zipCode">Your ZIP Code</label>
-        <input
-          id="zipCode"
-          v-model="userZipCode"
-          type="text"
-          pattern="\d{5}"
-          placeholder="Enter 5-digit ZIP code"
-          @input="fetchUserLatLong"
-        />
-      </div>
+      Your ZIP Code
+      <input
+        id="zipCode"
+        v-model="userZipCode"
+        type="text"
+        pattern="\d{5}"
+        placeholder="Enter 5-digit ZIP code"
+        @input="fetchUserLatLong"
+      />
     </div>
     <div class="items">
       <RentalItemCard

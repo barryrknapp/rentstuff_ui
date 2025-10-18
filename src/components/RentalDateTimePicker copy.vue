@@ -110,25 +110,6 @@ export default {
     },
   },
   computed: {
-    pickupTimeFormatted: {
-      get() {
-        return this.pickupTimeDate.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        });
-      },
-      set(val) {
-        const d = new Date();
-        const [time, ampm] = val.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (ampm === "PM" && hours !== 12) hours += 12;
-        if (ampm === "AM" && hours === 12) hours = 0;
-        d.setHours(hours, minutes);
-        this.pickupTimeDate = d;
-        this.$emit("update:pickup-time", val);
-      },
-    },
     isValidRentalDates() {
       if (!this.selectedDates[0] || !this.selectedDates[1]) {
         this.dateValidationError = "Please select a start and end date";
@@ -437,7 +418,9 @@ export default {
   flex-direction: column;
   gap: 5px;
 }
-
+:deep(.dp__time_input) {
+  display: none;
+}
 .error {
   color: #dc3545;
   font-size: 0.9em;
@@ -454,16 +437,14 @@ export default {
   font-size: 14px;
 }
 :deep(.dp__input) {
-  padding: 20px;
+  padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  width: 10px;
-  font-size: 1px;
+  width: 100px;
+  font-size: 14px;
   box-sizing: border-box;
   display: block !important;
   visibility: visible !important;
-  color: transparent !important;
-  caret-color: transparent !important; /* hides blinking cursor */
 }
 :deep(.dp__input_wrap) {
   position: relative;

@@ -17,14 +17,17 @@
       @update:pickup-time="pickupTime = $event"
       @update:dropoff-time="dropoffTime = $event"
       @update:date-validation-error="dateValidationError = $event"
+      @dates-selected="handleDatesSelected"
     />
     <ItemReviews
+      v-if="item.id"
       :item-id="item.id"
       :api-base-url="apiBaseUrl"
       v-model:reviews="itemReviews"
       v-model:show-reviews="showItemReviews"
     />
     <UserReviews
+      v-if="item.ownerId"
       :owner-id="item.ownerId"
       :api-base-url="apiBaseUrl"
       v-model:reviews="userReviews"
@@ -34,7 +37,7 @@
     <router-link
       :to="`/checkout/${item.id}?startDateTime=${startDateTime}&endDateTime=${endDateTime}`"
       class="btn"
-      :class="{ disabled: !isValidRentalDates || !isValidTimes || item.paused }"
+      :class="{ disabled: !isSelectionValid || item.paused || !item.id }"
       @click="logRedirect"
     >
       Rent Item
@@ -64,8 +67,7 @@ export default {
   data() {
     const currentDate = new Date();
     return {
-      apiBaseUrl:
-        import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/rentstuff",
+      apiBaseUrl: import.meta.env.VITE_API_BASE_URL || "http://localhost:8081",
       item: {
         imageIds: [],
         prices: [],
@@ -76,52 +78,48 @@ export default {
       bookings: [],
       selectedDates: [],
       pickupTime: "09:00 AM",
-      dropoffTime: "09:00 AM",
+      dropoffTime: "05:00 PM",
       itemReviews: [],
       userReviews: [],
       showItemReviews: false,
       showUserReviews: false,
       averageUserRating: "N/A",
       dateValidationError: "",
-      imageErrors: new Set(),
+      isSelectionValid: false,
     };
   },
   computed: {
     startDateTime() {
-      if (
-        !this.selectedDates[0] ||
-        !this.pickupTime ||
-        !this.isValidRentalDates ||
-        !this.isValidTimes
-      ) {
+      if (!this.selectedDates[0] || !this.pickupTime) {
         return "";
       }
       const time = this.convertTo24Hour(this.pickupTime);
       return `${this.selectedDates[0]}T${time}:00`;
     },
     endDateTime() {
-      if (
-        !this.selectedDates[1] ||
-        !this.dropoffTime ||
-        !this.isValidRentalDates ||
-        !this.isValidTimes
-      ) {
+      if (!this.selectedDates[1] || !this.dropoffTime) {
         return "";
       }
       const time = this.convertTo24Hour(this.dropoffTime);
       return `${this.selectedDates[1]}T${time}:00`;
-    },
-    isValidRentalDates() {
-      return !this.dateValidationError;
-    },
-    isValidTimes() {
-      return !this.dateValidationError;
     },
   },
   async created() {
     await Promise.all([this.fetchItem(), this.fetchBookings()]);
   },
   methods: {
+    handleDatesSelected({ selectedDates, pickupTime, dropoffTime }) {
+      console.log("Parent received dates-selected:", {
+        selectedDates,
+        pickupTime,
+        dropoffTime,
+      });
+      this.selectedDates = selectedDates;
+      this.pickupTime = pickupTime;
+      this.dropoffTime = dropoffTime;
+      this.isSelectionValid = true;
+      console.log("Selection validated, enabling Rent Item button");
+    },
     async fetchItem() {
       try {
         const response = await axios.get(
@@ -129,6 +127,8 @@ export default {
         );
         this.item = {
           ...response.data,
+          id: response.data.id || this.$route.params.id,
+          ownerId: response.data.ownerId || null,
           imageIds: response.data.imageIds || [],
           prices: response.data.prices || [],
           minDays: response.data.minDays || 1,
