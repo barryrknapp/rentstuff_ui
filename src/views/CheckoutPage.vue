@@ -128,7 +128,7 @@ export default {
 
 <style scoped>
 .price {
-  color: #28a745;
+  color: #17ae85;
   font-weight: bold;
 }
 .total-price {
