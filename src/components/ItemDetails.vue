@@ -39,7 +39,7 @@ export default {
   margin-bottom: 20px;
 }
 .price {
-  color: #28a745;
+  color: #17ae85;
   font-weight: bold;
 }
 </style>
