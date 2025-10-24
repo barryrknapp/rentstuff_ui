@@ -8,8 +8,8 @@
       auto-apply
       :enable-time-picker="false"
       :disabled-dates="disabledDates"
-      :min-date="currentDateString"
-      :start-date="currentDateString"
+      :min-date="minDate"
+      :start-date="minDate"
       :month="currentMonth"
       :year="currentYear"
       :model-config="modelConfig"
@@ -17,7 +17,7 @@
     />
     <p v-if="dateValidationError" class="error">{{ dateValidationError }}</p>
     <p v-if="isSelectionComplete" class="success">
-      Dates and times successfully selected!
+      Dates successfully selected!
     </p>
     <div v-if="isValidRentalDates" class="time-pickers">
       <div class="time-picker">
@@ -99,17 +99,18 @@ export default {
       currentMonth: currentDate.getMonth(),
       currentYear: currentDate.getFullYear(),
       modelConfig: { type: "string", mask: "YYYY-MM-DD" },
+      pickupTimeDate: new Date(),
     };
   },
-  watch: {
-    pickupTime(newVal) {
-      this.localPickupTime = newVal;
-    },
-    dropoffTime(newVal) {
-      this.localDropoffTime = newVal;
-    },
-  },
   computed: {
+    minDate() {
+      const today = new Date();
+      today.setDate(today.getDate() + 1); // Start from tomorrow
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}-${String(today.getDate()).padStart(2, "0")}`;
+    },
     pickupTimeFormatted: {
       get() {
         return this.pickupTimeDate.toLocaleTimeString([], {
@@ -130,36 +131,75 @@ export default {
       },
     },
     isValidRentalDates() {
+      console.log(
+        "Checking isValidRentalDates with selectedDates:",
+        this.selectedDates
+      );
+
       if (!this.selectedDates[0] || !this.selectedDates[1]) {
         this.dateValidationError = "Please select a start and end date";
         this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: No start or end date");
         return false;
       }
+
       const start = new Date(this.selectedDates[0]);
       const end = new Date(this.selectedDates[1]);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
+      console.log("Dates:", {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        today: today.toISOString(),
+      });
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        this.dateValidationError = "Invalid date format";
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Invalid date format");
+        return false;
+      }
+
       if (start <= today) {
         this.dateValidationError = "Start date must be after today";
         this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Start date not after today");
         return false;
       }
+
       if (end < start) {
         this.dateValidationError = "End date must be after start date";
         this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: End date before start date");
         return false;
       }
+
       const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-      if (durationDays < this.item.minDays) {
-        this.dateValidationError = `Rental must be at least ${this.item.minDays} days`;
+      console.log(
+        "Duration days:",
+        durationDays,
+        "minDays:",
+        this.item.minDays,
+        "maxDays:",
+        this.item.maxDays
+      );
+      if (durationDays < (this.item.minDays || 1)) {
+        this.dateValidationError = `Rental must be at least ${
+          this.item.minDays || 1
+        } days`;
         this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Duration too short");
         return false;
       }
-      if (durationDays > this.item.maxDays) {
-        this.dateValidationError = `Rental cannot exceed ${this.item.maxDays} days`;
+      if (durationDays > (this.item.maxDays || 30)) {
+        this.dateValidationError = `Rental cannot exceed ${
+          this.item.maxDays || 30
+        } days`;
         this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Duration too long");
         return false;
       }
+
       const allDisabledDates = [
         ...(this.item.unavailableDates || []).map((range) => ({
           startDate: range.startDate,
@@ -170,6 +210,7 @@ export default {
           endDate: this.toDateString(booking.endDate),
         })),
       ];
+      console.log("All disabled dates:", allDisabledDates);
       for (const unavailable of allDisabledDates) {
         const unavailableStart = new Date(unavailable.startDate);
         const unavailableEnd = new Date(unavailable.endDate);
@@ -181,16 +222,23 @@ export default {
           console.error(`Invalid date range: ${JSON.stringify(unavailable)}`);
           continue;
         }
+        console.log("Checking unavailable range:", {
+          unavailableStart: unavailableStart.toISOString(),
+          unavailableEnd: unavailableEnd.toISOString(),
+        });
         if (start < unavailableEnd && end >= unavailableStart) {
           this.dateValidationError = `Selected dates overlap with unavailable or booked dates (${this.formatDate(
             unavailable.startDate
           )} to ${this.formatDate(unavailable.endDate)})`;
           this.$emit("update:date-validation-error", this.dateValidationError);
+          console.log("Validation failed: Overlap with unavailable dates");
           return false;
         }
       }
+
       this.dateValidationError = "";
       this.$emit("update:date-validation-error", "");
+      console.log("Validation passed");
       return true;
     },
     isValidTimes() {
@@ -257,6 +305,14 @@ export default {
       };
     },
   },
+  watch: {
+    pickupTime(newVal) {
+      this.localPickupTime = newVal;
+    },
+    dropoffTime(newVal) {
+      this.localDropoffTime = newVal;
+    },
+  },
   mounted() {
     this.$nextTick(() => {
       const inputs = this.$el.querySelectorAll(".dp__input");
@@ -267,11 +323,132 @@ export default {
       console.log("Input elements:", inputs);
       console.log("Item unavailableDates:", this.item.unavailableDates);
       console.log("Bookings:", this.bookings);
+
+      // Initialize pickup and drop-off times with default values
+      this.handleTimeUpdate(this.localPickupTime, true);
+      this.handleTimeUpdate(this.localDropoffTime, false);
+
+      // Check if dates are already selected and valid
+      if (
+        this.selectedDates.length === 2 &&
+        this.selectedDates[0] &&
+        this.selectedDates[1]
+      ) {
+        this.handleDateUpdate(this.selectedDates);
+      }
     });
   },
   methods: {
+    validateDates(dates) {
+      console.log("Validating dates:", dates);
+
+      if (!dates[0] || !dates[1]) {
+        this.dateValidationError = "Please select a start and end date";
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: No start or end date");
+        return false;
+      }
+
+      const start = new Date(dates[0]);
+      const end = new Date(dates[1]);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      console.log("Dates:", {
+        start: start.toISOString(),
+        end: end.toISOString(),
+        today: today.toISOString(),
+      });
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        this.dateValidationError = "Invalid date format";
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Invalid date format");
+        return false;
+      }
+
+      if (start <= today) {
+        this.dateValidationError = "Start date must be after today";
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Start date not after today");
+        return false;
+      }
+
+      if (end < start) {
+        this.dateValidationError = "End date must be after start date";
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: End date before start date");
+        return false;
+      }
+
+      const durationDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+      console.log(
+        "Duration days:",
+        durationDays,
+        "minDays:",
+        this.item.minDays,
+        "maxDays:",
+        this.item.maxDays
+      );
+      if (durationDays < (this.item.minDays || 1)) {
+        this.dateValidationError = `Rental must be at least ${
+          this.item.minDays || 1
+        } days`;
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Duration too short");
+        return false;
+      }
+      if (durationDays > (this.item.maxDays || 30)) {
+        this.dateValidationError = `Rental cannot exceed ${
+          this.item.maxDays || 30
+        } days`;
+        this.$emit("update:date-validation-error", this.dateValidationError);
+        console.log("Validation failed: Duration too long");
+        return false;
+      }
+
+      const allDisabledDates = [
+        ...(this.item.unavailableDates || []).map((range) => ({
+          startDate: range.startDate,
+          endDate: range.endDate,
+        })),
+        ...this.bookings.map((booking) => ({
+          startDate: this.toDateString(booking.startDate),
+          endDate: this.toDateString(booking.endDate),
+        })),
+      ];
+      console.log("All disabled dates:", allDisabledDates);
+      for (const unavailable of allDisabledDates) {
+        const unavailableStart = new Date(unavailable.startDate);
+        const unavailableEnd = new Date(unavailable.endDate);
+        unavailableEnd.setDate(unavailableEnd.getDate() + 1);
+        if (
+          isNaN(unavailableStart.getTime()) ||
+          isNaN(unavailableEnd.getTime())
+        ) {
+          console.error(`Invalid date range: ${JSON.stringify(unavailable)}`);
+          continue;
+        }
+        console.log("Checking unavailable range:", {
+          unavailableStart: unavailableStart.toISOString(),
+          unavailableEnd: unavailableEnd.toISOString(),
+        });
+        if (start < unavailableEnd && end >= unavailableStart) {
+          this.dateValidationError = `Selected dates overlap with unavailable or booked dates (${this.formatDate(
+            unavailable.startDate
+          )} to ${this.formatDate(unavailable.endDate)})`;
+          this.$emit("update:date-validation-error", this.dateValidationError);
+          console.log("Validation failed: Overlap with unavailable dates");
+          return false;
+        }
+      }
+
+      this.dateValidationError = "";
+      this.$emit("update:date-validation-error", "");
+      console.log("Validation passed");
+      return true;
+    },
     handleDateUpdate(dates) {
-      console.log("handleDateUpdate triggered with:", dates);
+      console.log("Raw dates from VueDatePicker:", dates);
       const formattedDates = dates.map((date) => {
         if (date instanceof Date) {
           const year = date.getFullYear();
@@ -281,8 +458,8 @@ export default {
         }
         return date;
       });
+      console.log("Formatted dates:", formattedDates);
       this.$emit("update:selected-dates", formattedDates);
-      console.log("Date picker updated:", formattedDates);
 
       this.isSelectionComplete = false;
 
@@ -292,10 +469,9 @@ export default {
         formattedDates[1]
       ) {
         console.log("Checking validity for auto-selection:", {
-          isValidRentalDates: this.isValidRentalDates,
-          isValidTimes: this.isValidTimes,
+          isValid: this.validateDates(formattedDates),
         });
-        if (this.isValidRentalDates && this.isValidTimes) {
+        if (this.validateDates(formattedDates)) {
           this.isSelectionComplete = true;
           this.$emit("dates-selected", {
             selectedDates: formattedDates,
@@ -331,13 +507,11 @@ export default {
       }
       if (isPickup) {
         this.localPickupTime = timeStr;
+        this.$emit("update:pickup-time", timeStr);
       } else {
         this.localDropoffTime = timeStr;
+        this.$emit("update:dropoff-time", timeStr);
       }
-      this.$emit(
-        isPickup ? "update:pickup-time" : "update:dropoff-time",
-        timeStr
-      );
       console.log("Time picker updated:", {
         timeStr,
         pickup: this.localPickupTime,
@@ -352,10 +526,9 @@ export default {
         this.selectedDates[1]
       ) {
         console.log("Checking validity after time update:", {
-          isValidRentalDates: this.isValidRentalDates,
-          isValidTimes: this.isValidTimes,
+          isValid: this.validateDates(this.selectedDates),
         });
-        if (this.isValidRentalDates && this.isValidTimes) {
+        if (this.validateDates(this.selectedDates)) {
           this.isSelectionComplete = true;
           this.$emit("dates-selected", {
             selectedDates: this.selectedDates,
@@ -404,16 +577,18 @@ export default {
     },
     toDateString(dateStr) {
       if (!dateStr) return null;
+      console.log("Converting date string:", dateStr);
       const [year, month, day] = dateStr.split("T")[0].split("-").map(Number);
       const date = new Date(year, month - 1, day);
       if (isNaN(date.getTime())) {
         console.error(`Invalid date string: ${dateStr}`);
         return null;
       }
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${String(date.getDate()).padStart(2, "0")}`;
+      const formatted = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      console.log("Formatted date:", formatted);
+      return formatted;
     },
     formatDate(date) {
       if (!date) return "N/A";
@@ -437,7 +612,6 @@ export default {
   flex-direction: column;
   gap: 5px;
 }
-
 .error {
   color: #dc3545;
   font-size: 0.9em;
@@ -463,7 +637,7 @@ export default {
   display: block !important;
   visibility: visible !important;
   color: transparent !important;
-  caret-color: transparent !important; /* hides blinking cursor */
+  caret-color: transparent !important;
 }
 :deep(.dp__input_wrap) {
   position: relative;
